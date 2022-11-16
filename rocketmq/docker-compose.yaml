@@ -1,0 +1,125 @@
+version: '3'
+services:
+  #Service for nameserver
+  namesrv:
+    image: apache/rocketmq:4.8.0
+    container_name: namesrv
+    restart: always                         # 自动重启机制
+    ports:
+      - 9876:9876
+    environment:
+      - MAX_POSSIBLE_HEAP=200000000                                                 # 指定namesrv服务的最大堆内存
+    volumes:
+      - ./data/namesrv/logs:/home/rocketmq/logs                                     # broker-slave日志挂载目录
+      - ./data/namesrv/store:/home/rocketmq/store                                   # broker-slave日志挂载目录
+    command: sh mqnamesrv
+
+  namesrv1:
+    image: apache/rocketmq:4.8.0
+    container_name: namesrv1
+    restart: always                         # 自动重启机制
+    ports:
+      - 9877:9876
+    environment:
+      - MAX_POSSIBLE_HEAP=200000000                                                 # 指定namesrv服务的最大堆内存
+    volumes:
+      - ./data/namesrv/logs1:/home/rocketmq/logs                                     # broker-slave日志挂载目录
+      - ./data/namesrv/store1:/home/rocketmq/store                                   # broker-slave日志挂载目录
+    command: sh mqnamesrv
+
+# ===========  broker-a
+  #Service for another broker-master -- broker-a
+  broker-master:
+    image: apache/rocketmq:4.8.0
+    container_name: broker-master
+    restart: always                         # 自动重启机制
+    links:
+      - namesrv                             #  和rmqnamesrv容器通信
+    ports:
+      - 10909:10909                         # broker-master通信端口
+      - 10911:10911                         # 虚拟ip(vip)端口
+      - 10912:10912                         # 主从同步通信端口
+    environment:
+      - NAMESRV_ADDR=namesrv:9876           # 指定namesrv的地址为本机namesrv的ip地址:9876
+      - MAX_POSSIBLE_HEAP=200000000         # 指定broker-master服务的最大堆内存
+
+    volumes:
+      - ./data/broker-master/logs:/home/rocketmq/logs                                       # broker-master日志挂载目录
+      - ./data/broker-master/store:/home/rocketmq/store                                     # broker-master数据存储挂载目录
+      - ./conf/broker-a/broker-master.conf:/opt/rocketmq-4.8.0/conf/broker-master.conf      # 指定配置文件启动broker-master
+    command: sh mqbroker -c /opt/rocketmq-4.8.0/conf/broker-master.conf                     # 使用指定配置文件启动 初始化broker-master
+
+  #Service for another broker-slave -- broker-a
+  broker-slave:
+    image: apache/rocketmq:4.8.0
+    container_name: broker-slave
+    restart: always                         # 自动重启机制
+    links:
+      - namesrv                             #  和rmqnamesrv容器通信
+    ports:
+      - 10929:10909                         # broker通信端口
+      - 10931:10911                         # 虚拟ip(vip)端口
+      - 10932:10912                         # 主从同步通信端口
+    environment:
+      - NAMESRV_ADDR=namesrv:9876           # 指定namesrv的地址为本机namesrv的ip地址:9876
+      - MAX_POSSIBLE_HEAP=200000000         # 指定broker-slave服务的最大堆内存
+
+    volumes:
+      - ./data/broker-slave/logs:/home/rocketmq/logs                                           # broker-slave日志挂载目录
+      - ./data/broker-slave/store:/home/rocketmq/store                                         # broker-slave数据存储挂载目录
+      - ./conf/broker-a/broker-slave.conf:/opt/rocketmq-4.8.0/conf/broker-slave.conf           # 指定配置文件启动broker-slave
+    command: sh mqbroker -c /opt/rocketmq-4.8.0/conf/broker-slave.conf                         # 使用指定配置文件启动 初始化broker-master
+
+
+# ===========  broker-b
+  #Service for another broker-master -- broker-b
+  broker-master-b:
+    image: apache/rocketmq:4.8.0
+    container_name: broker-master-b
+    restart: always                         # 自动重启机制
+    links:
+      - namesrv                             #  和rmqnamesrv容器通信
+    ports:
+      - 10949:10909                         # broker-master通信端口
+      - 10941:10911                         # 虚拟ip(vip)端口
+      - 10942:10912                         # 主从同步通信端口
+    environment:
+      - NAMESRV_ADDR=namesrv:9877           # 指定namesrv的地址为本机namesrv的ip地址:9877
+      - MAX_POSSIBLE_HEAP=200000000         # 指定broker-master服务的最大堆内存
+
+    volumes:
+      - ./data/broker-master/logs1:/home/rocketmq/logs                                       # broker-master日志挂载目录
+      - ./data/broker-master/store1:/home/rocketmq/store                                     # broker-master数据存储挂载目录
+      - ./conf/broker-b/broker-master.conf:/opt/rocketmq-4.8.0/conf/broker-master.conf      # 指定配置文件启动broker-master
+    command: sh mqbroker -c /opt/rocketmq-4.8.0/conf/broker-master.conf                     # 使用指定配置文件启动 初始化broker-master
+
+  #Service for another broker-slave -- broker-b
+  broker-slave-b:
+    image: apache/rocketmq:4.8.0
+    container_name: broker-slave-b
+    restart: always                         # 自动重启机制
+    links:
+      - namesrv                             #  和rmqnamesrv容器通信
+    ports:
+      - 10959:10909                         # broker通信端口
+      - 10951:10911                         # 虚拟ip(vip)端口
+      - 10952:10912                         # 主从同步通信端口
+    environment:
+      - NAMESRV_ADDR=namesrv:9877           # 指定namesrv的地址为本机namesrv的ip地址:9877
+      - MAX_POSSIBLE_HEAP=200000000         # 指定broker-slave服务的最大堆内存
+
+    volumes:
+      - ./data/broker-slave/logs1:/home/rocketmq/logs                                           # broker-slave日志挂载目录
+      - ./data/broker-slave/store1:/home/rocketmq/store                                         # broker-slave数据存储挂载目录
+      - ./conf/broker-b/broker-slave.conf:/opt/rocketmq-4.8.0/conf/broker-slave.conf           # 指定配置文件启动broker-slave
+    command: sh mqbroker -c /opt/rocketmq-4.8.0/conf/broker-slave.conf                         # 使用指定配置文件启动 初始化broker-master
+
+
+  rocketmq-console:
+    image: apacherocketmq/rocketmq-console:2.0.0
+    container_name: rocketmq-console
+    restart: always                         # 自动重启机制
+    ports:
+      - 8080:8080
+    environment:
+      - JAVA_OPTS=-Drocketmq.namesrv.addr=192.168.64.131:9876;192.168.64.131:9877 -Dcom.rocketmq.sendMessageWithVIPChannel=false    # 如果存在多个 namesrv 地址，则使用分号进行叠加使用

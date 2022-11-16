@@ -1,0 +1,32 @@
+[mysqld]
+pid-file        = /var/run/mysqld/mysqld.pid
+socket                = /var/run/mysqld/mysqld.sock
+datadir                = /var/lib/mysql
+#log-error        = /var/log/mysql/error.log
+# By default we only accept connections from localhost
+#bind-address        = 127.0.0.1
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+
+#字符集设置
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+
+# 开启binlog
+log-bin=mysql-bin
+# 每次写入都同步到binlog
+binlog_format=ROW
+sync-binlog=1
+# 忽略系统库的数据同步
+binlog-ignore-db=information_schema
+binlog-ignore-db=mysql
+binlog-ignore-db=performance_schema
+binlog-ignore-db=sys
+
+# 中继日志
+relay_log=mysql-relay-bin
+
+# 自动开启半同步复制
+plugin_load="rpl_semi_sync_master=semisync_master.so"
+rpl_semi_sync_master_enabled=1
+rpl_semi_sync_master_timeout=1000

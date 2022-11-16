@@ -1,0 +1,32 @@
+[mysqld_safe]
+socket          = /var/run/mysqld/mysqld.sock
+nice            = 0
+
+[mysqld]
+pid-file        = /var/run/mysqld/mysqld.pid
+socket          = /var/run/mysqld/mysqld.sock
+datadir         = /var/lib/mysql
+max_connections = 2000
+character_set_server=utf8
+default-time_zone = '+8:00'
+innodb_buffer_pool_size = 512M
+max_allowed_packet = 50M
+
+sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+
+
+log-bin = /var/log/mysql/mysql-bin.log
+expire-logs-days = 14
+max-binlog-size = 500M
+server-id = 1
+
+
+slow_query_log_file = mysql-slow.log
+slow_query_log      = 1
+long_query_time = 1
+
+
+
+symbolic-links=0
+[mysql]
+prompt=drifter [\d]>

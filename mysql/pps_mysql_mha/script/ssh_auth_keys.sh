@@ -1,0 +1,1 @@
+cat /root/share_sshkeys/*.pub > /root/.ssh/authorized_keys

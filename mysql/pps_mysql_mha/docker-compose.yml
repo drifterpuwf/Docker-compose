@@ -1,0 +1,102 @@
+#构建mysql-mha环境
+version: "3.3"
+services:
+  mysql_master: &mysql_master # 使用制作好的镜像
+    image: hooray/mha4mysql-node
+    # 环境变量文件
+    env_file:
+      - ./env/mysql.env
+    # 指定特殊的环境变量
+    environment:
+      - KEY_SUFFIX=mysql_master
+    # 容器名称
+    container_name: mysql_master
+    # 在容器退出时总是重启
+    restart: unless-stopped
+    # 端口对外映射
+    ports:
+      - 3306:3306
+    # 数据卷挂载
+    volumes:
+      # mha 容器间共享目录
+      - ./data/share_sshkeys:/root/share_sshkeys
+      # mysql 配置文件
+      - ./conf/mysql_master.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      # myqsl 工作目录
+      - ./data/master:/var/lib/mysql
+      # mysql 数据初始化
+      # - ./init/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      # - ./init/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      # mysql_master 初始化配置
+      - ./init/mysql_master.sh:/docker-entrypoint-initdb.d/3-mysql_init.sh
+      # 挂载容器启动后要执行的脚本
+      - ./script:/etc/init.d/script
+    # 容器启动后默认执行的命令
+    command: ["--server-id=1"]
+
+  mysql_slave1:
+    # 继承mysql_master的属性
+    <<: *mysql_master
+    env_file:
+      - ./env/mysql.env
+    environment:
+      - KEY_SUFFIX=mysql_slave1
+    container_name: mysql_slave1
+    ports:
+      - 33061:3306
+    # 启动依赖于 mysql_master
+    depends_on:
+      - mysql_master
+    volumes:
+      - ./data/share_sshkeys:/root/share_sshkeys
+      - ./conf/mysql_slave.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      - ./data/slave1:/var/lib/mysql
+      # - ./init/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      # - ./init/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      # mysql_slave 初始化配置
+      - ./init/mysql_slave.sh:/docker-entrypoint-initdb.d/3-mysql_init.sh
+      - ./script:/etc/init.d/script
+    command: ["--server-id=21"]
+
+  mysql_slave2:
+    <<: *mysql_master
+    env_file:
+      - ./env/mysql.env
+    environment:
+      - KEY_SUFFIX=mysql_slave2
+    container_name: mysql_slave2
+    ports:
+      - 33062:3306
+    depends_on:
+      - mysql_master
+    volumes:
+      - ./data/share_sshkeys:/root/share_sshkeys
+      - ./conf/mysql_slave.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+      - ./data/slave2:/var/lib/mysql
+      # - ./init/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      # - ./init/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - ./init/mysql_slave.sh:/docker-entrypoint-initdb.d/3-mysql_init.sh
+      - ./script:/etc/init.d/script
+    command: ["--server-id=22"]
+  mha_manager:
+    image: hooray/mha4mysql-manager
+    environment:
+      - KEY_SUFFIX=mha_manager
+    container_name: mha_manager
+    depends_on:
+      - mysql_master
+      - mysql_slave1
+      - mysql_slave2
+    restart: always
+    volumes:
+      - ./data/share_sshkeys:/root/share_sshkeys
+      # 挂载mha配置文件
+      - ./conf/mha_manager.cnf:/etc/mha/mha_manager.cnf
+      # 修复mha无法解析长名称mysql的问题
+      - ./init/NodeUtil.pm:/usr/share/perl5/MHA/NodeUtil.pm
+      # 挂载mha数据文件
+      - ./data/mha_manager:/var/log/masterha/
+      - ./init/mha_manager.sh:/etc/init.d/script/mha_manager.sh
+      - ./script:/etc/init.d/script
+    # 防止启动后退出
+    entrypoint: "tail -f /dev/null"

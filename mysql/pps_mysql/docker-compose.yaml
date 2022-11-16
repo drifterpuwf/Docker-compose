@@ -1,0 +1,41 @@
+version: '3'
+services:
+  mysqlmaster:
+    image: mysql:5.7
+    restart: always
+    container_name: mysqlmaster
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+      - ./master_conf:/etc/mysql/conf.d
+      - ./master_data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime
+
+  mysqlslave:
+    image: pps-mysql:5.7
+    restart: always
+    container_name: mysqlslave
+    ports:
+      - 3307:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+      - ./mysqlslave_conf:/etc/mysql/conf.d
+      - ./mysqlslave_data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime
+
+
+
+
+#    networks:
+#      mysql-ms-network:
+#        ipv4_address: 172.25.0.102
+#
+#networks:
+#  mysql-ms-network:
+#    driver: bridge
+#    ipam:
+#      config:
+#      - subnet: 172.25.0.0/24
