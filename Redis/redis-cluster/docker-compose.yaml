@@ -1,0 +1,73 @@
+version: '3'
+services:
+  redis1:
+    image: harbor.saloon-sit.supaur.tech/slzx-test/redis:4.0.4
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./conf/redis-cluster1.tmpl:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+  redis2:
+    image: harbor.saloon-sit.supaur.tech/slzx-test/redis:4.0.4
+    ports:
+      - "7001:7001"
+    volumes:
+      - ./conf/redis-cluster2.tmpl:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+  redis3:
+    image: harbor.saloon-sit.supaur.tech/slzx-test/redis:4.0.4
+    ports:
+      - "7002:7002"
+    volumes:
+      - ./conf/redis-cluster3.tmpl:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+  redis4:
+    image: harbor.saloon-sit.supaur.tech/slzx-test/redis:4.0.4
+    ports:
+      - "7003:7003"
+    volumes:
+      - ./conf/redis-cluster4.tmpl:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+
+  redis5:
+    image: harbor.saloon-sit.supaur.tech/slzx-test/redis:4.0.4
+    ports:
+      - "7004:7004"
+    volumes:
+      - ./conf/redis-cluster5.tmpl:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+  redis6:
+    image: harbor.saloon-sit.supaur.tech/slzx-test/redis:4.0.4
+    ports:
+      - "7005:7005"
+    volumes:
+      - ./conf/redis-cluster6.tmpl:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+  redis-cluster:
+    tty: true
+    build:
+      context: .
+      args:
+        redis_version: '4.0.4'
+    hostname: server
+    depends_on:
+      - redis1
+      - redis2
+      - redis3
+      - redis4
+      - redis5
+      - redis6
+    network_mode: host
+
