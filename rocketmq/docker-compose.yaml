@@ -17,7 +17,6 @@ services:
     network_mode: host
 
 
-
 # ===========  broker-a
   #Service for another broker-master -- broker-a
   broker-master:
@@ -61,9 +60,6 @@ services:
       - ./conf/broker-a/broker-slave.conf:/opt/rocketmq-4.8.0/conf/broker-slave.conf           # 指定配置文件启动broker-slave
     command: sh mqbroker -c /opt/rocketmq-4.8.0/conf/broker-slave.conf                         # 使用指定配置文件启动 初始化broker-master
     network_mode: host
-
-
-
 
 
   rocketmq-console:
